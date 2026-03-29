@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
-use Sabberworm\CSS\Settings;
+use App\Models\Setting;
 
 class AdminController extends Controller
 {
@@ -52,7 +52,7 @@ class AdminController extends Controller
 
     public function settings()
     {
-        $data = Settings::first();
+        $data = Setting::first();
         return view('backend.setting')->with('data', $data);
     }
 
@@ -69,9 +69,7 @@ class AdminController extends Controller
             'phone' => 'required|string',
         ]);
         $data = $request->all();
-        // return $data;
-        $settings = Settings::first();
-        // return $settings;
+        $settings = Setting::firstOrNew();
         $status = $settings->fill($data)->save();
         if ($status) {
             request()->session()->flash('success', 'Setting successfully updated');
