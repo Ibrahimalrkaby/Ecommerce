@@ -74,6 +74,31 @@ Route::get('user/login/{provider}/callback/', [LoginController::class, 'Callback
 
 Route::get('/', [FrontendController::class, 'home'])->name('home');
 
+//FRONT END ROUTE
+Route::get('/home', [FrontendController::class, 'index']);
+Route::get('about-us', [FrontendController::class, 'aboutUs'])->name('about-us');
+Route::get('contact', [FrontendController::class, 'contact'])->name('contact');
+/////add here contact message
+//PRODUCT IN FRONTEND
+Route::get('product-detail/{slug}', [FrontendController::class, 'productDetail'])->name('product-detail');
+Route::get('product-grid', [FrontendController::class, 'productGrid'])->name('product-grid');
+Route::get('product-lists', [FrontendController::class, 'productLists'])->name('product.lists');
+Route::get('product-filter', [FrontendController::class, 'productFilter'])->name('product-filter');
+Route::get('product-search', [FrontendController::class, 'productSearch'])->name('product-search');
+Route::get('product-brand/{slug}', [FrontendController::class, 'productBrand'])->name('product-brand');
+Route::get('product-cat/{slug}', [FrontendController::class, 'productCat'])->name('product-cat');
+Route::get('product-sub-cat/{slug}/{sub_slug}', [FrontendController::class, 'productSubCat'])->name('product-sub-cat');
+
+
+//BLOG IN FRONTEND
+Route::get('blog', [FrontendController::class, 'blog'])->name('blog');
+Route::get('blog-detail/{slug}', [FrontendController::class, 'blogDetail'])->name('blog.detail');
+Route::get('blog-search', [FrontendController::class, 'blogSearch'])->name('blog.search');
+Route::get('blog-filter', [FrontendController::class, 'blogFilter'])->name('blog.filter');
+Route::get('blog-cat/{slug}', [FrontendController::class, 'blogByCategory'])->name('blog.category');
+Route::get('blog-tag/{slug}', [FrontendController::class, 'blogByTag'])->name('blog.tag');
+
+
 Route::get('/cart', function () {
     return view('frontend.pages.cart');
 })->name('cart');
