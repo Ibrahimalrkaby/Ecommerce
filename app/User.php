@@ -3,6 +3,7 @@
 namespace App;
 
 use App\Models\ProductReview;
+use App\Models\Wishlist;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -64,5 +65,10 @@ class User extends Authenticatable
     public function product_review()
     {
         return $this->belongsTo(ProductReview::class);
+    }
+
+    public function wishlists()
+    {
+        return $this->hasMany(Wishlist::class);
     }
 }

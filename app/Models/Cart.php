@@ -22,4 +22,9 @@ class Cart extends Model
     {
         return $this->belongsTo(Order::class, 'product_id');
     }
+
+    public function wishlists()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
 }

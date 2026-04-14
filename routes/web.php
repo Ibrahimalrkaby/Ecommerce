@@ -10,6 +10,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\FrontendController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
@@ -21,10 +22,12 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductReviewController;
 use App\Http\Controllers\ShippingController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WishlistController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
+use UniSharp\LaravelFilemanager\Lfm;
 
 /*
 |--------------------------------------------------------------------------
@@ -81,13 +84,13 @@ Route::get('contact', [FrontendController::class, 'contact'])->name('contact');
 /////add here contact message
 //PRODUCT IN FRONTEND
 Route::get('product-detail/{slug}', [FrontendController::class, 'productDetail'])->name('product-detail');
-Route::get('product-grid', [FrontendController::class, 'productGrid'])->name('product-grid');
+Route::get('product-grid', [FrontendController::class, 'productGrid'])->name('product-grids');
 Route::get('product-lists', [FrontendController::class, 'productLists'])->name('product.lists');
-Route::get('product-filter', [FrontendController::class, 'productFilter'])->name('product-filter');
-Route::get('product-search', [FrontendController::class, 'productSearch'])->name('product-search');
-Route::get('product-brand/{slug}', [FrontendController::class, 'productBrand'])->name('product-brand');
+Route::get('product-filter', [FrontendController::class, 'productFilter'])->name('product.filter');
+Route::get('product-search', [FrontendController::class, 'productSearch'])->name('product.search');
+Route::get('product-brand/{slug}', [FrontendController::class, 'productBrand'])->name('product.brand');
 Route::get('product-cat/{slug}', [FrontendController::class, 'productCat'])->name('product-cat');
-Route::get('product-sub-cat/{slug}/{sub_slug}', [FrontendController::class, 'productSubCat'])->name('product-sub-cat');
+Route::get('product-sub-cat/{slug}/{sub_slug}', [FrontendController::class, 'productSubCat'])->name('product.sub-cat');
 
 
 //BLOG IN FRONTEND
@@ -108,6 +111,12 @@ Route::get('/add-to-cart/{slug}', [CartController::class, 'addToCart'])->name('a
 Route::post('/add-to-cart', [CartController::class, 'singleAddToCart'])->name('single-add-to-cart')->middleware('user');
 Route::get('cart-delete/{id}', [CartController::class, 'cartDelete'])->name('cart-delete');
 Route::post('cart-update', [CartController::class, 'cartUpdate'])->name('cart.update');
+// Wishlist section
+Route::get('/wishlist', function () {
+    return view('frontend.pages.wishlist');
+})->name('wishlist');
+Route::get('/wishlist/{slug}', [WishlistController::class, 'wishlist'])->name('add-to-wishlist')->middleware('user');
+Route::get('/wishlist-delete/{id}', [WishlistController::class, 'wishlistDelete'])->name('wishlist-delete');
 // Order
 Route::post('cart/order', [OrderController::class, 'store'])->name('cart.order');
 Route::get('order/pdf/{id}', [OrderController::class, 'pdf'])->name('order.pdf');
@@ -124,6 +133,9 @@ Route::resource('/comment', PostCommentController::class);
 
 // Coupon 
 Route::post('/coupon-store', [CouponController::class, 'couponStore'])->name('coupon-store');
+
+// NewsLetter
+Route::post('/subscribe', [FrontendController::class, 'subscribe'])->name('subscribe');
 
 
 Route::group(['prefix' => '/admin', 'middleware' => ['auth', 'admin']], function () {
@@ -178,5 +190,33 @@ Route::group(['prefix' => '/admin', 'middleware' => ['auth', 'admin']], function
 });
 
 //USER SECTION #################
+Route::group(['prefix' => '/user', 'middleware' => ['user']], function () {
+    Route::get('/', [HomeController::class, 'index'])->name('user');
+    // Profile
+    Route::get('/profile', [HomeController::class, 'profile'])->name('user-profile');
+    Route::post('/profile/{id}', [HomeController::class, 'profileUpdate'])->name('user-profile-update');
+    //  Order
+    Route::get('/order', "HomeController@orderIndex")->name('user.order.index');
+    Route::get('/order/show/{id}', "HomeController@orderShow")->name('user.order.show');
+    Route::delete('/order/delete/{id}', [HomeController::class, 'userOrderDelete'])->name('user.order.delete');
+    // Product Review
+    Route::get('/user-review', [HomeController::class, 'productReviewIndex'])->name('user.productreview.index');
+    Route::delete('/user-review/delete/{id}', [HomeController::class, 'productReviewDelete'])->name('user.productreview.delete');
+    Route::get('/user-review/edit/{id}', [HomeController::class, 'productReviewEdit'])->name('user.productreview.edit');
+    Route::patch('/user-review/update/{id}', [HomeController::class, 'productReviewUpdate'])->name('user.productreview.update');
 
-// POST COMMENT
+    // Post comment
+    Route::get('user-post/comment', [HomeController::class, 'userComment'])->name('user.post-comment.index');
+    Route::delete('user-post/comment/delete/{id}', [HomeController::class, 'userCommentDelete'])->name('user.post-comment.delete');
+    Route::get('user-post/comment/edit/{id}', [HomeController::class, 'userCommentEdit'])->name('user.post-comment.edit');
+    Route::patch('user-post/comment/update/{id}', [HomeController::class, 'userCommentUpdate'])->name('user.post-comment.update');
+
+    // Password Change
+    Route::get('change-password', [HomeController::class, 'changePassword'])->name('user.change.password.form');
+    Route::post('change-password', [HomeController::class, 'changPasswordStore'])->name('change.password');
+});
+
+//File Manager
+Route::group(['prefix' => 'laravel-filemanager', 'middleware' => ['web', 'auth']], function () {
+    Lfm::routes();
+});
