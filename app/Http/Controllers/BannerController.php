@@ -7,6 +7,13 @@ use Illuminate\Http\Request;
 
 class BannerController extends Controller
 {
+    protected function normalizePhotoPath(string $photo): string
+    {
+        $photo = trim($photo);
+
+        return parse_url($photo, PHP_URL_PATH) ?: $photo;
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -30,20 +37,23 @@ class BannerController extends Controller
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'title' => 'required|string',
-            'photo' => 'required | string',
-            'description' => 'nullable | string',
-            'status' => 'required|in:active,inactive',
+            'title'       => 'required|string',
+            'photo'       => 'required|string', // ✅ it's a URL string, not a file
+            'description' => 'nullable|string',
+            'status'      => 'required|in:active,inactive',
         ]);
 
         $slug = generateUniqueSlug($request->title, Banner::class);
 
+        // ✅ No need for ->store(), LFM already saved the file
+        // Just save the URL/path directly from the input
         $validatedData['slug'] = $slug;
+        $validatedData['photo'] = $this->normalizePhotoPath($request->photo);
 
         $banner = Banner::create($validatedData);
 
         $message = $banner
-            ? 'banner successfully created'
+            ? 'Banner successfully created'
             : 'Error, Please try again';
 
         return redirect()->route('banner.index')->with(
@@ -51,6 +61,7 @@ class BannerController extends Controller
             $message
         );
     }
+
 
     /**
      * Display the specified resource.
@@ -91,6 +102,8 @@ class BannerController extends Controller
             'description' => 'nullable | string',
             'status' => 'required|in:active,inactive',
         ]);
+
+        $validatedData['photo'] = $this->normalizePhotoPath($request->photo);
 
         $status = $banner->update($validatedData);
 

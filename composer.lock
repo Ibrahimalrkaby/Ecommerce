@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e52bea2998847cba35c841de9774599b",
+    "content-hash": "aa666903da5b159e9abc55bc35eed4c6",
     "packages": [
         {
             "name": "barryvdh/laravel-dompdf",
@@ -4490,12 +4490,12 @@
             "version": "3.0.40",
             "source": {
                 "type": "git",
-                "url": "https://github.com/srmklive/laravel-paypal.git",
+                "url": "https://github.com/blendbyte/laravel-paypal.git",
                 "reference": "1ddc49fd836a4785933ab953452152f3fedbac63"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/srmklive/laravel-paypal/zipball/1ddc49fd836a4785933ab953452152f3fedbac63",
+                "url": "https://api.github.com/repos/blendbyte/laravel-paypal/zipball/1ddc49fd836a4785933ab953452152f3fedbac63",
                 "reference": "1ddc49fd836a4785933ab953452152f3fedbac63",
                 "shasum": ""
             },
@@ -4546,8 +4546,8 @@
                 "web service"
             ],
             "support": {
-                "issues": "https://github.com/srmklive/laravel-paypal/issues",
-                "source": "https://github.com/srmklive/laravel-paypal/tree/3.0.40"
+                "issues": "https://github.com/blendbyte/laravel-paypal/issues",
+                "source": "https://github.com/blendbyte/laravel-paypal/tree/3.0.40"
             },
             "time": "2025-02-25T21:38:18+00:00"
         },
