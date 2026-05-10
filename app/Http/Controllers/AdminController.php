@@ -70,6 +70,22 @@ class AdminController extends Controller
         ]);
         $data = $request->all();
         $settings = Setting::firstOrNew();
+
+        $incomingPhoto = isset($data['photo']) ? (new Setting)->normalizeIncomingPhotoString($data['photo']) : '';
+        $incomingLogo = isset($data['logo']) ? (new Setting)->normalizeIncomingPhotoString($data['logo']) : '';
+
+        if ($settings->exists) {
+            if ($incomingPhoto !== '' && $incomingPhoto !== $settings->photo) {
+                $settings->deleteStoredPhotoIfExists();
+            }
+            if ($incomingLogo !== '' && $incomingLogo !== $settings->logo) {
+                $settings->deleteStoredLogoIfExists();
+            }
+        }
+
+        $data['photo'] = $incomingPhoto;
+        $data['logo'] = $incomingLogo;
+
         $status = $settings->fill($data)->save();
         if ($status) {
             request()->session()->flash('success', 'Setting successfully updated');

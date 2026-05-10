@@ -11,6 +11,7 @@ use PDF;
 use Helper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {

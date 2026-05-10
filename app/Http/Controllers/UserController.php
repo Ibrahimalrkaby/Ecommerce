@@ -31,16 +31,16 @@ class UserController extends Controller
     {
         $validatedData = $request->validate([
             'name' => 'required|string|max:30',
-            'email' => 'required|string|unique:user',
+            'email' => 'required|string|unique:users,email',
             'password' => 'required|string',
             'role' => 'required|in:admin,user',
             'status' => 'required|in:active,inactive',
-            'photo' => 'nullable|string'
+            'photo' => 'nullable|string',
         ]);
 
-        $slug = generateUniqueSlug($request->title, User::class);
-
-        $validatedData['slug'] = $slug;
+        if (! empty($validatedData['photo'])) {
+            $validatedData['photo'] = (new User)->normalizeIncomingPhotoString($validatedData['photo']);
+        }
 
         $user = User::create($validatedData);
 
@@ -89,12 +89,20 @@ class UserController extends Controller
 
         $validatedData = $request->validate([
             'name' => 'required|string|max:30',
-            'email' => 'required|string|unique:user',
+            'email' => 'required|string|unique:users,email,' . $id,
             'password' => 'required|string',
             'role' => 'required|in:admin,user',
             'status' => 'required|in:active,inactive',
-            'photo' => 'nullable|string'
+            'photo' => 'nullable|string',
         ]);
+
+        if (array_key_exists('photo', $validatedData) && $validatedData['photo'] !== null && $validatedData['photo'] !== '') {
+            $newPhoto = $user->normalizeIncomingPhotoString($validatedData['photo']);
+            if ($newPhoto !== $user->photo) {
+                $user->deleteStoredPhotoIfExists();
+            }
+            $validatedData['photo'] = $newPhoto;
+        }
 
         $status = $user->update($validatedData);
 
@@ -119,6 +127,7 @@ class UserController extends Controller
             return redirect()->back()->with('error', 'user not found');
         }
 
+        $user->deleteStoredPhotoIfExists();
         $status = $user->delete();
 
         $message = $status

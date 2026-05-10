@@ -5,7 +5,7 @@
   <div class="card-body">
     @if($message)
         @if($message->photo)
-        <img src="{{$message->photo}}" class="rounded-circle " style="margin-left:44%;">
+        <img src="{{ $message->photo_url }}" class="rounded-circle " style="margin-left:44%;">
         @else 
         <img src="{{asset('backend/img/avatar.png')}}" class="rounded-circle " style="margin-left:44%;">
         @endif

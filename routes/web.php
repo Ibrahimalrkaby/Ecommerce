@@ -14,6 +14,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PaypalController;
 use App\Http\Controllers\PostCategoryController;
 use App\Http\Controllers\PostCommentController;
 use App\Http\Controllers\PostController;
@@ -119,6 +120,10 @@ Route::get('/wishlist/{slug}', [WishlistController::class, 'wishlist'])->name('a
 Route::get('/wishlist-delete/{id}', [WishlistController::class, 'wishlistDelete'])->name('wishlist-delete');
 // Order
 Route::post('cart/order', [OrderController::class, 'store'])->name('cart.order');
+// PayPal (Express Checkout)
+Route::get('paypal/payment', [PaypalController::class, 'payment'])->name('payment')->middleware('user');
+Route::get('paypal/success', [PaypalController::class, 'paymentSuccess'])->name('payment.success');
+Route::get('paypal/cancel', [PaypalController::class, 'paymentCancel'])->name('payment.cancel');
 Route::get('order/pdf/{id}', [OrderController::class, 'pdf'])->name('order.pdf');
 Route::get('/income', [OrderController::class, 'incomeChart'])->name('product.order.income');
 Route::get('/product/track', [OrderController::class, 'orderTrack'])->name('order.track');

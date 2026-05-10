@@ -2,66 +2,140 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Cart;
-use App\Models\Product;
-use Srmklive\PayPal\Services\ExpressCheckout;
+use App\Models\Order;
+use Illuminate\Http\Request;
+use Srmklive\PayPal\Services\PayPal;
 
 class PaypalController extends Controller
 {
     public function payment()
     {
-        $cart = Cart::where('user_id', auth()->user()->id)->where('order_id', null)->get()->toArray();
+        $userId = auth()->id();
+        $orderId = session('id');
 
-        $data = [];
-
-        // return $cart;
-        $data['items'] = array_map(function ($item) use ($cart) {
-            $name = Product::where('id', $item['product_id'])->pluck('title');
-            return [
-                'name' => $name,
-                'price' => $item['price'],
-                'desc'  => 'Thank you for using paypal',
-                'qty' => $item['quantity']
-            ];
-        }, $cart);
-
-        $data['invoice_id'] = 'ORD-' . strtoupper(uniqid());
-        $data['invoice_description'] = "Order #{$data['invoice_id']} Invoice";
-        $data['return_url'] = route('payment.success');
-        $data['cancel_url'] = route('payment.cancel');
-
-        $total = 0;
-        foreach ($data['items'] as $item) {
-            $total += $item['price'] * $item['qty'];
+        if ($orderId === null || $orderId === '') {
+            return redirect()->route('cart')->with('error', 'Checkout session expired. Please place your order again.');
         }
 
-        $data['total'] = $total;
-        if (session('coupon')) {
-            $data['shipping_discount'] = session('coupon')['value'];
+        $order = Order::where('id', $orderId)->where('user_id', $userId)->first();
+        if (! $order) {
+            return redirect()->route('cart')->with('error', 'Order not found.');
         }
-        Cart::where('user_id', auth()->user()->id)->where('order_id', null)->update(['order_id' => session()->get('id')]);
 
-        // return session()->get('id');
-        $provider = new ExpressCheckout;
+        if ((float) $order->total_amount <= 0) {
+            return redirect()->route('cart')->with('error', 'Invalid order total.');
+        }
 
-        $response = $provider->setExpressCheckout($data);
+        session(['paypal_pending_order_id' => (int) $orderId]);
 
-        return redirect($response['paypal_link']);
+        Cart::where('user_id', $userId)->whereNull('order_id')->update(['order_id' => $orderId]);
+
+        try {
+            $paypal = new PayPal;
+            $tokenResponse = $paypal->getAccessToken();
+        } catch (\Throwable $e) {
+            return redirect()->route('cart')->with('error', 'PayPal could not be reached. Try again later.');
+        }
+
+        if (! isset($tokenResponse['access_token'])) {
+            $message = is_string($tokenResponse['error'] ?? null)
+                ? $tokenResponse['error']
+                : 'PayPal authentication failed. Check PAYPAL_* credentials in .env.';
+
+            return redirect()->route('cart')->with('error', $message);
+        }
+
+        $currency = strtoupper((string) config('paypal.currency', 'USD'));
+        $value = number_format((float) $order->total_amount, 2, '.', '');
+
+        $payload = [
+            'intent' => 'CAPTURE',
+            'application_context' => [
+                'return_url' => route('payment.success'),
+                'cancel_url' => route('payment.cancel'),
+                'shipping_preference' => 'NO_SHIPPING',
+                'user_action' => 'PAY_NOW',
+            ],
+            'purchase_units' => [
+                [
+                    'reference_id' => 'order_'.$order->id,
+                    'description' => 'Order '.$order->order_number,
+                    'custom_id' => (string) $order->id,
+                    'amount' => [
+                        'currency_code' => $currency,
+                        'value' => $value,
+                    ],
+                ],
+            ],
+        ];
+
+        try {
+            $response = $paypal->createOrder($payload);
+        } catch (\Throwable $e) {
+            return redirect()->route('cart')->with('error', 'Could not start PayPal checkout.');
+        }
+
+        if (isset($response['error']) || empty($response['id'])) {
+            $err = $response['error'] ?? $response['message'] ?? 'Could not create PayPal order.';
+            $text = is_string($err) ? $err : (is_array($err) ? json_encode($err) : 'PayPal error.');
+
+            return redirect()->route('cart')->with('error', $text);
+        }
+
+        $approve = collect($response['links'] ?? [])->firstWhere('rel', 'approve');
+        $href = is_array($approve) ? ($approve['href'] ?? null) : null;
+
+        if (! $href) {
+            return redirect()->route('cart')->with('error', 'PayPal did not return a checkout link.');
+        }
+
+        return redirect()->away($href);
     }
 
     public function paymentCancel()
     {
-        return redirect()->route('cart.index')->with('error', 'Payment has been cancelled');
+        session()->forget('paypal_pending_order_id');
+
+        return redirect()->route('cart')->with('error', 'Payment has been cancelled');
     }
 
     public function paymentSuccess(Request $request)
     {
-        $provider = new ExpressCheckout;
-        $response = $provider->getExpressCheckoutDetails($request->token);
-        if (in_array(strtoupper($response['ACK']), ['SUCCESS', 'SUCCESSWITHWARNING'])) {
-            return redirect()->route('cart.index')->with('success', 'Payment successful');
+        $paypalOrderId = $request->query('token');
+        if (! $paypalOrderId) {
+            return redirect()->route('cart')->with('error', 'Missing payment confirmation from PayPal.');
         }
-        return redirect()->route('cart.index')->with('error', 'Payment failed');
+
+        $orderId = session('paypal_pending_order_id');
+        if (! $orderId) {
+            return redirect()->route('cart')->with('error', 'Checkout session expired. If you were charged, contact support with your PayPal receipt.');
+        }
+
+        try {
+            $paypal = new PayPal;
+            $tokenResponse = $paypal->getAccessToken();
+            if (! isset($tokenResponse['access_token'])) {
+                return redirect()->route('cart')->with('error', 'PayPal could not verify payment.');
+            }
+
+            $result = $paypal->capturePaymentOrder($paypalOrderId);
+        } catch (\Throwable $e) {
+            return redirect()->route('cart')->with('error', 'Payment verification failed. Try again or contact support.');
+        }
+
+        $completed = ($result['status'] ?? '') === 'COMPLETED';
+
+        if (isset($result['error']) || ! $completed) {
+            session()->forget('paypal_pending_order_id');
+
+            return redirect()->route('cart')->with('error', 'Payment was not completed.');
+        }
+
+        session()->forget(['paypal_pending_order_id', 'cart', 'coupon']);
+
+        request()->session()->flash('success', 'Your product successfully placed in order');
+
+        return redirect()->route('home');
     }
 }

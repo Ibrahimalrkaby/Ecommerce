@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicStoragePhoto;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Post extends Model
 {
     use HasFactory;
+    use HasPublicStoragePhoto;
 
     protected $fillable = [
         'title',
@@ -22,6 +24,18 @@ class Post extends Model
         'added_by',
         'status',
     ];
+
+    protected $appends = ['photo_url'];
+
+    public function getPhotoUrlAttribute(): ?string
+    {
+        return $this->publicUrlForStored($this->photo);
+    }
+
+    public function deleteStoredPhotoIfExists(): void
+    {
+        $this->deleteStoredFileIfExists($this->photo);
+    }
 
     public function cat_info()
     {

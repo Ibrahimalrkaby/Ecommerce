@@ -8,8 +8,7 @@
                     <div class="top-left">
                         <ul class="list-main">
                             @php
-                                $settings = DB::table('settings')->get();
-
+                                $settings = \App\Models\Setting::all();
                             @endphp
                             <li><i class="ti-headphone-alt"></i>
                                 @foreach ($settings as $data)
@@ -59,11 +58,8 @@
                 <div class="col-lg-2 col-md-2 col-12">
                     <!-- Logo -->
                     <div class="logo">
-                        @php
-                            $settings = DB::table('settings')->get();
-                        @endphp
                         <a href="{{ route('home') }}"><img
-                                src="@foreach ($settings as $data) {{ $data->logo }} @endforeach" alt="logo"></a>
+                                src="@foreach ($settings as $data) {{ $data->logo_url }} @endforeach" alt="logo"></a>
                     </div>
                     <!--/ End Logo -->
                     <!-- Search Form -->

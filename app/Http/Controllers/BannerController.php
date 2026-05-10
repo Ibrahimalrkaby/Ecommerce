@@ -7,13 +7,6 @@ use Illuminate\Http\Request;
 
 class BannerController extends Controller
 {
-    protected function normalizePhotoPath(string $photo): string
-    {
-        $photo = trim($photo);
-
-        return parse_url($photo, PHP_URL_PATH) ?: $photo;
-    }
-
     /**
      * Display a listing of the resource.
      */
@@ -38,17 +31,17 @@ class BannerController extends Controller
     {
         $validatedData = $request->validate([
             'title'       => 'required|string',
-            'photo'       => 'required|string', // ✅ it's a URL string, not a file
+            'photo'       => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048', // ✅ file فعلي
             'description' => 'nullable|string',
             'status'      => 'required|in:active,inactive',
         ]);
 
         $slug = generateUniqueSlug($request->title, Banner::class);
-
-        // ✅ No need for ->store(), LFM already saved the file
-        // Just save the URL/path directly from the input
         $validatedData['slug'] = $slug;
-        $validatedData['photo'] = $this->normalizePhotoPath($request->photo);
+
+        if ($request->hasFile('photo')) {
+            $validatedData['photo'] = $request->file('photo')->store('banners', 'public');
+        }
 
         $banner = Banner::create($validatedData);
 
@@ -98,12 +91,19 @@ class BannerController extends Controller
 
         $validatedData = $request->validate([
             'title' => 'required|string',
-            'photo' => 'required | string',
-            'description' => 'nullable | string',
+            'photo' => $request->hasFile('photo')
+                ? 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048'
+                : 'required|string|max:2048',
+            'description' => 'nullable|string',
             'status' => 'required|in:active,inactive',
         ]);
 
-        $validatedData['photo'] = $this->normalizePhotoPath($request->photo);
+        if ($request->hasFile('photo')) {
+            $banner->deleteStoredPhotoIfExists();
+            $validatedData['photo'] = $request->file('photo')->store('banners', 'public');
+        } else {
+            $validatedData['photo'] = $banner->normalizeIncomingPhotoString($request->input('photo'));
+        }
 
         $status = $banner->update($validatedData);
 
@@ -128,6 +128,7 @@ class BannerController extends Controller
             return redirect()->back()->with('error', 'banner not found');
         }
 
+        $banner->deleteStoredPhotoIfExists();
         $status = $banner->delete();
 
         $message = $status

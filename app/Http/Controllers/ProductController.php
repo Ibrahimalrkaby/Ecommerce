@@ -60,6 +60,10 @@ class ProductController extends Controller
             $validatedData['size'] = '';
         }
 
+        if (! empty($validatedData['photo'] ?? null)) {
+            $validatedData['photo'] = (new Product)->normalizeCommaSeparatedPhotoPaths($validatedData['photo']);
+        }
+
         $product = Product::create($validatedData);
 
         $message = $product
@@ -124,6 +128,14 @@ class ProductController extends Controller
             $validatedData['size'] = '';
         }
 
+        if (array_key_exists('photo', $validatedData) && $validatedData['photo'] !== null && $validatedData['photo'] !== '') {
+            $newPhoto = $product->normalizeCommaSeparatedPhotoPaths($validatedData['photo']);
+            if ($newPhoto !== $product->photo) {
+                $product->deleteStoredPhotoIfExists();
+            }
+            $validatedData['photo'] = $newPhoto;
+        }
+
         $status = $product->update($validatedData);
 
         $message = $status
@@ -143,6 +155,7 @@ class ProductController extends Controller
     {
         $product = Product::findOrFail($id);
 
+        $product->deleteStoredPhotoIfExists();
         $status = $product->delete();
 
         $message = $status

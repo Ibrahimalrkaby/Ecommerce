@@ -20,7 +20,7 @@
                 <a class="dropdown-item d-flex align-items-center" href="{{route('message.show',$message->id)}}">
                     <div class="dropdown-list-image mr-3">
                         @if($message->photo)
-                        <img class="rounded-circle" src="{{$message->photo}}" alt="profile">
+                        <img class="rounded-circle" src="{{ $message->photo_url }}" alt="profile">
                         @else 
                         <img class="rounded-circle" src="{{asset('backend/img/avatar.png')}}" alt="default img">
                         @endif

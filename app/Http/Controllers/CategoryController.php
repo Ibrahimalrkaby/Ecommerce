@@ -46,6 +46,10 @@ class CategoryController extends Controller
 
         $validatedData['is_parent'] = $request->input('is_parent', '0');
 
+        if (! empty($validatedData['photo'] ?? null)) {
+            $validatedData['photo'] = (new Category)->normalizeIncomingPhotoString($validatedData['photo']);
+        }
+
         $category = Category::create($validatedData);
 
         $message = $category
@@ -102,6 +106,14 @@ class CategoryController extends Controller
 
         $validatedData['is_parent'] = $request->input('is_parent', 0);
 
+        if (array_key_exists('photo', $validatedData) && $validatedData['photo'] !== null && $validatedData['photo'] !== '') {
+            $newPhoto = (new Category)->normalizeIncomingPhotoString($validatedData['photo']);
+            if ($newPhoto !== $category->photo) {
+                $category->deleteStoredPhotoIfExists();
+            }
+            $validatedData['photo'] = $newPhoto;
+        }
+
         $status = $category->update($validatedData);
 
         $message = $status
@@ -123,6 +135,7 @@ class CategoryController extends Controller
         // dd($category);
         $child_cat_id = Category::where('parent_id', $id)->pluck('id');
 
+        $category->deleteStoredPhotoIfExists();
         $status = $category->delete();
 
         if ($status && $child_cat_id->count() > 0) {

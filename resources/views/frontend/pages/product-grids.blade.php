@@ -21,7 +21,7 @@
     <!-- End Breadcrumbs -->
 
     <!-- Product Style -->
-    <form action="{{route('shop.filter')}}" method="POST">
+    <form action="{{route('product.filter')}}" method="POST">
         @csrf
         <section class="product-area shop-sidebar shop section">
             <div class="container">
@@ -90,12 +90,9 @@
                                     {{-- {{dd($recent_products)}} --}}
                                     @foreach($recent_products as $product)
                                         <!-- Single Post -->
-                                        @php
-                                            $photo=explode(',',$product->photo);
-                                        @endphp
                                         <div class="single-post first">
                                             <div class="image">
-                                                <img src="{{$photo[0]}}" alt="{{$photo[0]}}">
+                                                <img src="{{ $product->photo_url }}" alt="{{ $product->title }}">
                                             </div>
                                             <div class="content">
                                                 <h5><a href="{{route('product-detail',$product->slug)}}">{{$product->title}}</a></h5>
@@ -118,7 +115,7 @@
                                             $brands=DB::table('brands')->orderBy('title','ASC')->where('status','active')->get();
                                         @endphp
                                         @foreach($brands as $brand)
-                                            <li><a href="{{route('product-brand',$brand->slug)}}">{{$brand->title}}</a></li>
+                                            <li><a href="{{route('product.brand',$brand->slug)}}">{{$brand->title}}</a></li>
                                         @endforeach
                                     </ul>
                                 </div>
@@ -154,7 +151,7 @@
                                     </div>
                                     <ul class="view-mode">
                                         <li class="active"><a href="javascript:void(0)"><i class="fa fa-th-large"></i></a></li>
-                                        <li><a href="{{route('product-lists')}}"><i class="fa fa-th-list"></i></a></li>
+                                        <li><a href="{{route('product.lists')}}"><i class="fa fa-th-list"></i></a></li>
                                     </ul>
                                 </div>
                                 <!--/ End Shop Top -->
@@ -168,11 +165,8 @@
                                         <div class="single-product">
                                             <div class="product-img">
                                                 <a href="{{route('product-detail',$product->slug)}}">
-                                                    @php
-                                                        $photo=explode(',',$product->photo);
-                                                    @endphp
-                                                    <img class="default-img" src="{{$photo[0]}}" alt="{{$photo[0]}}">
-                                                    <img class="hover-img" src="{{$photo[0]}}" alt="{{$photo[0]}}">
+                                                    <img class="default-img" src="{{ $product->photo_url }}" alt="{{ $product->title }}">
+                                                    <img class="hover-img" src="{{ $product->photo_url }}" alt="{{ $product->title }}">
                                                     @if($product->discount)
                                                                 <span class="price-dec">{{$product->discount}} % Off</span>
                                                     @endif
@@ -236,13 +230,9 @@
                                         <!-- Product Slider -->
                                             <div class="product-gallery">
                                                 <div class="quickview-slider-active">
-                                                    @php
-                                                        $photo=explode(',',$product->photo);
-                                                    // dd($photo);
-                                                    @endphp
-                                                    @foreach($photo as $data)
+                                                    @foreach($product->photo_urls as $data)
                                                         <div class="single-slider">
-                                                            <img src="{{$data}}" alt="{{$data}}">
+                                                            <img src="{{ $data }}" alt="{{ $product->title }}">
                                                         </div>
                                                     @endforeach
                                                 </div>

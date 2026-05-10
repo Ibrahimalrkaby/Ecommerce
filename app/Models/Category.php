@@ -2,14 +2,28 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicStoragePhoto;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Category extends Model
 {
     use HasFactory;
+    use HasPublicStoragePhoto;
 
     protected $fillable = ['title', 'slug', 'summary', 'photo', 'status', 'is_parent', 'parent_id', 'added_by'];
+
+    protected $appends = ['photo_url'];
+
+    public function getPhotoUrlAttribute(): ?string
+    {
+        return $this->publicUrlForStored($this->photo);
+    }
+
+    public function deleteStoredPhotoIfExists(): void
+    {
+        $this->deleteStoredFileIfExists($this->photo);
+    }
 
     public function parent_info()
     {

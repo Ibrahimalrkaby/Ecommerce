@@ -11,7 +11,7 @@
 	<meta property="og:url" content="{{route('product-detail',$product_detail->slug)}}">
 	<meta property="og:type" content="article">
 	<meta property="og:title" content="{{$product_detail->title}}">
-	<meta property="og:image" content="{{$product_detail->photo}}">
+	<meta property="og:image" content="{{ $product_detail->photo_url }}">
 	<meta property="og:description" content="{{$product_detail->description}}">
 @endsection
 @section('title','E-SHOP || PRODUCT DETAIL')
@@ -46,13 +46,9 @@
 											<!-- Images slider -->
 											<div class="flexslider-thumbnails">
 												<ul class="slides">
-													@php 
-														$photo=explode(',',$product_detail->photo);
-													// dd($photo);
-													@endphp
-													@foreach($photo as $data)
-														<li data-thumb="{{$data}}" rel="adjustX:10, adjustY:">
-															<img src="{{$data}}" alt="{{$data}}">
+													@foreach($product_detail->photo_urls as $data)
+														<li data-thumb="{{ $data }}" rel="adjustX:10, adjustY:">
+															<img src="{{ $data }}" alt="{{ $product_detail->title }}">
 														</li>
 													@endforeach
 												</ul>
@@ -322,11 +318,8 @@
                                 <div class="single-product">
                                     <div class="product-img">
 										<a href="{{route('product-detail',$data->slug)}}">
-											@php 
-												$photo=explode(',',$data->photo);
-											@endphp
-                                            <img class="default-img" src="{{$photo[0]}}" alt="{{$photo[0]}}">
-                                            <img class="hover-img" src="{{$photo[0]}}" alt="{{$photo[0]}}">
+                                            <img class="default-img" src="{{ $data->photo_url }}" alt="{{ $data->title }}">
+                                            <img class="hover-img" src="{{ $data->photo_url }}" alt="{{ $data->title }}">
                                             <span class="price-dec">{{$data->discount}} % Off</span>
                                                                     {{-- <span class="out-of-stock">Hot</span> --}}
                                         </a>

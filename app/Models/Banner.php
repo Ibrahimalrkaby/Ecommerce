@@ -2,35 +2,26 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicStoragePhoto;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 
 class Banner extends Model
 {
     use HasFactory;
+    use HasPublicStoragePhoto;
 
     protected $fillable = ['title', 'slug', 'photo', 'description', 'status'];
 
     protected $appends = ['photo_url'];
 
-    public function getPhotoUrlAttribute(): string
+    public function getPhotoUrlAttribute(): ?string
     {
-        if (!$this->photo) {
-            return asset('backend/img/avatar.png');
-        }
+        return $this->publicUrlForStored($this->photo);
+    }
 
-        $photoPath = trim(parse_url($this->photo, PHP_URL_PATH) ?: $this->photo);
-        $relativePath = ltrim($photoPath, '/');
-
-        if (Str::startsWith($this->photo, ['http://', 'https://']) && file_exists(public_path($relativePath))) {
-            return asset($relativePath);
-        }
-
-        if (file_exists(public_path($relativePath))) {
-            return asset($relativePath);
-        }
-
-        return asset('backend/img/avatar.png');
+    public function deleteStoredPhotoIfExists(): void
+    {
+        $this->deleteStoredFileIfExists($this->photo);
     }
 }

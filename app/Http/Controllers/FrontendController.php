@@ -27,7 +27,7 @@ class FrontendController extends Controller
     //FRONTEND
     public function home()
     {
-        $featured = Product::where('status', 'active')->where('is_featured', 1)->orderBy('price', 'DESC')->limit(2)->get();
+        $featured = Product::with('cat_info')->where('status', 'active')->where('is_featured', 1)->orderBy('price', 'DESC')->limit(2)->get();
         $posts = Post::where('status', 'active')->orderBy('id', 'DESC')->limit(3)->get();
         $banners = Banner::where('status', 'active')->limit(3)->orderBy('id', 'DESC')->get();
         // return $banner;

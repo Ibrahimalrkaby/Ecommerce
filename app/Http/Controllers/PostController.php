@@ -63,6 +63,10 @@ class PostController extends Controller
             $data['tags'] = '';
         }
 
+        if (! empty($data['photo'] ?? null)) {
+            $data['photo'] = (new Post)->normalizeIncomingPhotoString($data['photo']);
+        }
+
         $status = Post::create($data);
         if ($status) {
             request()->session()->flash('success', 'Post Successfully added');
@@ -117,7 +121,14 @@ class PostController extends Controller
         } else {
             $data['tags'] = '';
         }
-        // return $data;
+
+        if (! empty($data['photo'] ?? null)) {
+            $newPhoto = $post->normalizeIncomingPhotoString($data['photo']);
+            if ($newPhoto !== $post->photo) {
+                $post->deleteStoredPhotoIfExists();
+            }
+            $data['photo'] = $newPhoto;
+        }
 
         $status = $post->fill($data)->save();
         if ($status) {
@@ -135,6 +146,7 @@ class PostController extends Controller
     {
         $post = Post::findOrFail($id);
 
+        $post->deleteStoredPhotoIfExists();
         $status = $post->delete();
 
         if ($status) {

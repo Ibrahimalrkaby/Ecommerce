@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use App\Models\Product;
+use App\Models\Wishlist;
 use Illuminate\Http\Request;
 
 class CartController extends Controller
@@ -37,7 +38,9 @@ class CartController extends Controller
             $already_cart->quantity = $already_cart->quantity + 1;
             $already_cart->amount = $product->price + $already_cart->amount;
             // return $already_cart->quantity;
-            if ($already_cart->product->stock < $already_cart->quantity || $already_cart->product->stock <= 0) return back()->with('error', 'Stock not sufficient!.');
+            if (!$already_cart->product || $already_cart->product->stock < $already_cart->quantity || $already_cart->product->stock <= 0) {
+                return back()->with('error', 'Stock not sufficient!.');
+            }
             $already_cart->save();
         } else {
 
@@ -47,7 +50,9 @@ class CartController extends Controller
             $cart->price = ($product->price - ($product->price * $product->discount) / 100);
             $cart->quantity = 1;
             $cart->amount = $cart->price * $cart->quantity;
-            if ($cart->product->stock < $cart->quantity || $cart->product->stock <= 0) return back()->with('error', 'Stock not sufficient!.');
+            if ($product->stock < $cart->quantity || $product->stock <= 0) {
+                return back()->with('error', 'Stock not sufficient!.');
+            }
             $cart->save();
             $wishlist = Wishlist::where('user_id', auth()->user()->id)->where('cart_id', null)->update(['cart_id' => $cart->id]);
         }
@@ -63,12 +68,12 @@ class CartController extends Controller
         ]);
 
         $product = Product::where('slug', $request->slug)->first();
-        if ($product->stock < $request->quant[1]) {
-            return back()->with('error', 'Out of stock, You can add other products.');
-        }
-        if (($request->quant[1] < 1) || empty($product)) {
+        if (empty($product) || ($request->quant[1] < 1)) {
             request()->session()->flash('error', 'Invalid Products');
             return back();
+        }
+        if ($product->stock < $request->quant[1]) {
+            return back()->with('error', 'Out of stock, You can add other products.');
         }
         $already_cart = Cart::where('user_id', auth()->user()->id)->where('order_id', null)->where('product_id', $product->id)->first();
 
@@ -77,7 +82,9 @@ class CartController extends Controller
             // $already_cart->price = ($product->price * $request->quant[1]) + $already_cart->price ;
             $already_cart->amount = ($product->price * $request->quant[1]) + $already_cart->amount;
 
-            if ($already_cart->product->stock < $already_cart->quantity || $already_cart->product->stock <= 0) return back()->with('error', 'Stock not sufficient!.');
+            if (!$already_cart->product || $already_cart->product->stock < $already_cart->quantity || $already_cart->product->stock <= 0) {
+                return back()->with('error', 'Stock not sufficient!.');
+            }
 
             $already_cart->save();
         } else {
@@ -88,7 +95,9 @@ class CartController extends Controller
             $cart->price = ($product->price - ($product->price * $product->discount) / 100);
             $cart->quantity = $request->quant[1];
             $cart->amount = ($product->price * $request->quant[1]);
-            if ($cart->product->stock < $cart->quantity || $cart->product->stock <= 0) return back()->with('error', 'Stock not sufficient!.');
+            if ($product->stock < $cart->quantity || $product->stock <= 0) {
+                return back()->with('error', 'Stock not sufficient!.');
+            }
             // return $cart;
             $cart->save();
         }
@@ -123,6 +132,11 @@ class CartController extends Controller
                 // return $cart;
                 if ($quant > 0 && $cart) {
                     // return $quant;
+
+                    if (!$cart->product) {
+                        request()->session()->flash('error', 'A cart item refers to a product that is no longer available.');
+                        return back();
+                    }
 
                     if ($cart->product->stock < $quant) {
                         request()->session()->flash('error', 'Out of stock');

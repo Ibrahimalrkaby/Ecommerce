@@ -55,7 +55,7 @@ class MessageController extends Controller
         $data['phone'] = $message->phone;
         $data['message'] = $message->message;
         $data['subject'] = $message->subject;
-        $data['photo'] = Auth()->user()->photo;
+        $data['photo'] = Auth()->user()->photo_url;
         // return $data;    
         event(new MessageSent($data));
         exit();
